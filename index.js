@@ -26,6 +26,27 @@ redisClient.connect().catch(console.error);
 
 
 
+app.get("/users/:username", async function(req, res) {
+    const { username } = req.params;
+    try {
+        
+        const response = await fetch(`https://api.github.com/users/${username}`);
+        const data = await response.json();
+
+        const expiresInSeconds = 60;
+
+        await redisClient.setEx(username, expiresInSeconds ,JSON.stringify(data));
+        res.status(200).json({
+            data,
+            from: "api"
+        });
+
+    } catch (error) {
+        console.error(`Error fetching GitHub user: ${error}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 app.listen(PORT, function(){
     console.log(`Listening on port ${PORT}`);
 });
