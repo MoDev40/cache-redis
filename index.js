@@ -24,9 +24,25 @@ redisClient.on("error", function(error){
 
 redisClient.connect().catch(console.error);
 
+async function hasCache(req, res, next) {
+    const { username } = req.params;
+    try {
+        const data = await redisClient.get(username);
+        if (data) {
+            res.status(200).json({
+                data:JSON.parse(data),
+                from:"cache"
+            });
+        } else {
+            next();
+        }
+    } catch (error) {
+        console.error(`Error retrieving from cache: ${error}`);
+        next();
+    }
+}
 
-
-app.get("/users/:username", async function(req, res) {
+app.get("/users/:username", hasCache, async function(req, res) {
     const { username } = req.params;
     try {
         
